@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Open Accounting Path</title>
+  <meta name="description" content="A free, self-paced, project-driven curriculum that takes you from zero to professionally competent in accounting — with a dedicated Saudi (SOCPA) track." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <button id="menuBtn" class="icon-btn" aria-label="Toggle menu">☰</button>
+    <a href="#/" class="brand">
+      <span class="brand-mark">∑</span>
+      <span class="brand-text">The Open Accounting Path</span>
+    </a>
+    <div class="topbar-spacer"></div>
+    <div class="search-wrap">
+      <input id="search" type="search" placeholder="Search modules, topics, resources…" autocomplete="off" />
+    </div>
+    <div id="progressChip" class="progress-chip" title="Your overall progress">0%</div>
+    <button id="themeBtn" class="icon-btn" aria-label="Toggle theme">◐</button>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar">
+      <nav id="nav"></nav>
+      <div class="sidebar-foot">
+        <button id="resetProgress" class="link-btn">Reset progress</button>
+      </div>
+    </aside>
+    <div id="scrim" class="scrim"></div>
+    <main id="main" class="main" tabindex="-1"></main>
+  </div>
+
+  <footer class="site-foot">
+    <span class="heart">♦</span>
+    Made with care for my friend <b>Abdulaziz</b> — from your first journal entry to signing your own audit opinions.
+    <span class="sep">·</span> Free forever <span class="sep">·</span> CC BY-SA 4.0
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
