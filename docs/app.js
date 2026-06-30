@@ -1,4 +1,4 @@
-/* The Open Accounting Path — single-page app (vanilla JS, no deps) */
+/* The Open Accounting Path — bilingual (ع/EN) single-page app, vanilla JS */
 (function () {
   "use strict";
   var D = window.CURRICULUM || {};
@@ -6,478 +6,459 @@
   var SAUDI = D.saudi || null;
   var SAUDI_MODS = (SAUDI && SAUDI.modules) || [];
 
-  // ---- module index ----
   var flatGlobal = [];
   TRACKS.forEach(function (t) { (t.modules || []).forEach(function (m) { flatGlobal.push(m); }); });
   var allMods = flatGlobal.concat(SAUDI_MODS);
   var byId = {};
   allMods.forEach(function (m) { byId[m.id] = m; });
 
-  // ---- progress (localStorage) ----
-  var PKEY = "oac-progress-v1";
-  function loadProgress() {
-    try { return new Set(JSON.parse(localStorage.getItem(PKEY) || "[]")); }
-    catch (e) { return new Set(); }
+  /* ---------- language ---------- */
+  var LKEY = "oac-lang";
+  var LANG = localStorage.getItem(LKEY) || "ar";
+  function rtl() { return LANG === "ar"; }
+  var UI = {
+    home: { en: "Home", ar: "الرئيسية" },
+    curriculum: { en: "Curriculum", ar: "المنهج" },
+    jurisdiction: { en: "Jurisdiction", ar: "المسار المحلّي" },
+    more: { en: "More", ar: "المزيد" },
+    projects: { en: "Projects", ar: "المشاريع" },
+    certifications: { en: "Certifications", ar: "الشهادات المهنية" },
+    tooling: { en: "Tooling", ar: "الأدوات" },
+    career: { en: "Career & FAQ", ar: "المسار المهني والأسئلة" },
+    about: { en: "About", ar: "حول المنهج" },
+    arabicRes: { en: "Arabic resources", ar: "مصادر عربية" },
+    searchPh: { en: "Search modules, topics, resources…", ar: "ابحث في الوحدات والمواضيع والمصادر…" },
+    reset: { en: "Reset progress", ar: "إعادة ضبط التقدّم" },
+    startAt: { en: "Start at module", ar: "ابدأ من الوحدة" },
+    trackOverview: { en: "Track overview", ar: "نظرة عامة على المسار" },
+    resources: { en: "Resources", ar: "المصادر" },
+    why: { en: "Why it matters", ar: "لماذا تهمّ هذه الوحدة" },
+    byEnd: { en: "By the end you'll be able to:", ar: "في نهاية الوحدة ستكون قادرًا على:" },
+    project: { en: "Project", ar: "مشروع تطبيقي" },
+    buildThis: { en: "Build this", ar: "نفّذ هذا" },
+    checkpoint: { en: "Checkpoint", ar: "نقطة تحقّق" },
+    doneWhen: { en: "You're done when", ar: "تكون قد أتقنتها عندما" },
+    markDone: { en: "Mark this module complete", ar: "علّم هذه الوحدة كمكتملة" },
+    prev: { en: "Previous", ar: "السابق" },
+    next: { en: "Next", ar: "التالي" },
+    prereqs: { en: "Prerequisites", ar: "المتطلبات السابقة" },
+    none: { en: "none", ar: "لا يوجد" },
+    readFirst: { en: "Saudi overlay — read these global modules first", ar: "إضافة سعودية — ادرس هذه الوحدات الأساسية أولًا" },
+    overlayMap: { en: "Overlay map", ar: "خريطة الدمج" },
+    regulators: { en: "Who's who — Saudi regulators", ar: "الجهات التنظيمية السعودية" },
+    free: { en: "Free", ar: "مجاني" },
+    completed: { en: "you've completed", ar: "أنجزت منه" },
+    modules: { en: "modules", ar: "وحدة" },
+    freeRes: { en: "free resources", ar: "مصدر مجاني" },
+    certRoadmaps: { en: "cert roadmaps", ar: "مسار شهادات" },
+    projectsCount: { en: "projects", ar: "مشروع" },
+    thePath: { en: "The path", ar: "المسار التعليمي" },
+    howToUse: { en: "How to use this", ar: "كيف تستخدم هذا المنهج" },
+    moreAbout: { en: "More about the philosophy, principles & staying accountable →", ar: "المزيد عن الفلسفة والمبادئ والالتزام ←" },
+    faq: { en: "FAQ", ar: "الأسئلة الشائعة" },
+    readyWhen: { en: "Ready when", ar: "تكون جاهزًا عندما" },
+    focusModules: { en: "Focus modules", ar: "الوحدات المهمّة" },
+    credentials: { en: "Credentials", ar: "الشهادات ذات الصلة" },
+    deliverable: { en: "Deliverable", ar: "المُسلَّم المطلوب" },
+    skills: { en: "Skills", ar: "المهارات" },
+    level: { en: "Level", ar: "المستوى" },
+    after: { en: "After", ar: "بعد الوحدات" },
+    whoFor: { en: "Who it's for", ar: "لمن هذه الشهادة" },
+    cost: { en: "Cost", ar: "التكلفة" },
+    region: { en: "Region", ar: "المنطقة" },
+    mapsTo: { en: "Modules", ar: "الوحدات" },
+    curationNotes: { en: "Curation & verification notes", ar: "ملاحظات الإعداد والتحقّق" },
+    results: { en: "results for", ar: "نتيجة للبحث عن" },
+    searchTitle: { en: "Search", ar: "البحث" },
+    engRes: { en: "English resources (optional)", ar: "مصادر بالإنجليزية (اختيارية)" },
+    arCoverage: { en: "Arabic coverage", ar: "تغطية المصادر العربية" },
+    saudiTrack: { en: "Saudi (SOCPA) Track", ar: "مسار السعودية (SOCPA)" },
+    notReplace: { en: "This track does not replace the global core. For each row, finish the listed global module(s) first, then layer the Saudi specifics on top.", ar: "هذا المسار لا يُغني عن المنهج الأساسي. لكل صفّ، أكمل الوحدة الأساسية المذكورة أولًا، ثم أضف التفاصيل السعودية فوقها." },
+    howToUseTrack: { en: "How to use this track", ar: "كيف تستخدم هذا المسار" },
+    saudiModulesH: { en: "Saudi overlay modules", ar: "وحدات المسار السعودي" },
+    overlays: { en: "Overlays", ar: "يُكمّل الوحدات" },
+    saudiCol: { en: "Saudi module", ar: "الوحدة السعودية" },
+    pairsCol: { en: "Pairs with global", ar: "يُقرن مع الأساسية" },
+    changesCol: { en: "What changes", ar: "ما الذي يتغيّر" },
+    bodyCol: { en: "Body", ar: "الجهة" },
+    roleCol: { en: "Role", ar: "الدور" },
+    notForTitle: { en: "What this is not", ar: "ما الذي لا يقدّمه هذا المنهج" },
+    philosophy: { en: "Philosophy", ar: "الفلسفة" },
+    timeC: { en: "Time commitment", ar: "الوقت المطلوب" },
+    principles: { en: "Principles", ar: "المبادئ" },
+    accountability: { en: "Staying accountable", ar: "كيف تلتزم وتستمر" },
+    jurisdictions: { en: "Jurisdictions", ar: "الأطر المحلّية" },
+    seq: { en: "Recommended sequencing", ar: "الترتيب المقترح" },
+    builtH: { en: "How it was built", ar: "كيف أُعدّ هذا المنهج" },
+    builtP: { en: "Designed by independent curriculum architects, resourced by web-research agents, adversarially link-verified, then graded against CPA/CMA/ACCA blueprints and gap-filled. Resources can still go stale — if a link has moved, search its title and provider.", ar: "صُمِّم بواسطة معماريي مناهج مستقلّين، وجُمعت مصادره عبر وكلاء بحث على الويب، وتُحقّق من روابطه بشكل نقدي، ثم قُيّم مقابل مخططات اختبارات CPA/CMA/ACCA وسُدّت الثغرات. قد تتقادم المصادر — إن تغيّر رابط فابحث عن عنوانه ومصدره." },
+    license: { en: "Curriculum (roadmap, descriptions, projects) under CC BY-SA 4.0. Linked resources belong to their authors.", ar: "المنهج (الخريطة والأوصاف والمشاريع) برخصة CC BY-SA 4.0. المصادر المرتبطة تعود لأصحابها." },
+    whoForH: { en: "Who it's for", ar: "لمن هذا المنهج" },
+    careerPaths: { en: "Career paths", ar: "المسارات المهنية" },
+    kicker: { en: "Free · Self-paced · Project-driven", ar: "مجاني · بإيقاعك · قائم على المشاريع" },
+    arResIntroNav: { en: "Best free Arabic resources", ar: "أفضل المصادر العربية المجانية" },
+    empty: { en: "Nothing here.", ar: "لا يوجد محتوى." },
+    notFound: { en: "Not found.", ar: "غير موجود." },
+    confirmReset: { en: "Clear all your progress?", ar: "مسح كل تقدّمك؟" },
+    ofN: { en: "of", ar: "من" },
+  };
+  function t(k) { var e = UI[k] || {}; return e[LANG] || e.en || k; }
+
+  /* localized field pickers (Arabic merged into the same objects) */
+  function pk(o, en, ar) { if (!o) return ""; return (rtl() && o[ar]) ? o[ar] : (o[en] || ""); }
+  function pkArr(o, en, ar) { if (!o) return []; return (rtl() && o[ar] && o[ar].length) ? o[ar] : (o[en] || []); }
+  function mTitle(m) { return pk(m, "title", "titleAr"); }
+  function mSum(m) { return pk(m, "summary", "summaryAr"); }
+  function mWhy(m) { return pk(m, "whyItMatters", "whyItMattersAr"); }
+  function mOut(m) { return pkArr(m, "outcomes", "outcomesAr"); }
+  function mProj(m) { return pk(m, "project", "projectAr"); }
+  function mCheck(m) { return pk(m, "milestoneCheck", "milestoneCheckAr"); }
+  function primaryRes(m) {
+    if (rtl() && m.arabicResources && m.arabicResources.length) return m.arabicResources;
+    return m.resources || [];
   }
-  function saveProgress(s) {
-    try { localStorage.setItem(PKEY, JSON.stringify(Array.from(s))); } catch (e) {}
-  }
-  var done = loadProgress();
-  function isDone(id) { return done.has(id); }
-  function toggleDone(id, v) {
-    if (v) done.add(id); else done.delete(id);
-    saveProgress(done); refreshProgressUI();
+  function secondaryRes(m) {
+    if (rtl() && m.arabicResources && m.arabicResources.length) return m.resources || [];
+    return [];
   }
 
-  // ---- theme ----
+  /* ---------- progress ---------- */
+  var PKEY = "oac-progress-v1";
+  function loadP() { try { return new Set(JSON.parse(localStorage.getItem(PKEY) || "[]")); } catch (e) { return new Set(); } }
+  function saveP(s) { try { localStorage.setItem(PKEY, JSON.stringify(Array.from(s))); } catch (e) {} }
+  var done = loadP();
+  function isDone(id) { return done.has(id); }
+  function toggleDone(id, v) { if (v) done.add(id); else done.delete(id); saveP(done); refreshUI(); }
+
+  /* ---------- theme ---------- */
   var TKEY = "oac-theme";
-  function applyTheme(t) {
-    if (t === "dark") document.documentElement.setAttribute("data-theme", "dark");
-    else document.documentElement.removeAttribute("data-theme");
-  }
+  function applyTheme(x) { if (x === "dark") document.documentElement.setAttribute("data-theme", "dark"); else document.documentElement.removeAttribute("data-theme"); }
   applyTheme(localStorage.getItem(TKEY) || "light");
   document.getElementById("themeBtn").addEventListener("click", function () {
-    var cur = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-    localStorage.setItem(TKEY, cur); applyTheme(cur);
+    var c = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    localStorage.setItem(TKEY, c); applyTheme(c);
   });
 
-  // ---- helpers ----
-  function esc(s) {
-    return String(s == null ? "" : s)
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-  }
+  /* ---------- helpers ---------- */
+  function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+  function bdi(s) { return "<bdi>" + esc(s) + "</bdi>"; }
   function costInfo(c) {
     var k = String(c || "").toLowerCase();
-    if (k.indexOf("free-to-audit") >= 0 || k.indexOf("free to audit") >= 0) return ["audit", "Free to audit"];
-    if (k.indexOf("freemium") >= 0) return ["freemium", "Freemium"];
-    if (k.indexOf("paid") >= 0) return ["paid", "Paid (optional)"];
-    if (k.indexOf("free") >= 0) return ["free", "Free"];
-    return ["free", c || "Free"];
+    if (k.indexOf("free-to-audit") >= 0 || k.indexOf("free to audit") >= 0) return ["audit", rtl() ? "مجاني بالاستماع" : "Free to audit"];
+    if (k.indexOf("freemium") >= 0) return ["freemium", rtl() ? "مجاني جزئيًا" : "Freemium"];
+    if (k.indexOf("paid") >= 0) return ["paid", rtl() ? "مدفوع (اختياري)" : "Paid (optional)"];
+    if (k.indexOf("free") >= 0 || k.indexOf("مجاني") >= 0) return ["free", t("free")];
+    return ["free", c || t("free")];
   }
-  function roleClass(r) {
-    var k = String(r || "").toLowerCase();
-    if (k.indexOf("supp") >= 0) return "supplement";
-    if (k.indexOf("practice") >= 0) return "practice";
-    if (k.indexOf("refer") >= 0) return "reference";
-    return "primary";
-  }
-  function roleRank(r) {
-    var k = String(r || "").toLowerCase();
-    if (k.indexOf("primary") >= 0 || k.indexOf("anchor") >= 0) return 0;
-    if (k.indexOf("supp") >= 0) return 1;
-    if (k.indexOf("practice") >= 0) return 2;
-    return 3;
-  }
-  function go(hash) { location.hash = hash; }
-  function modLink(id) {
-    var m = byId[id];
-    if (!m) return esc(id);
-    return '<a href="#/module/' + encodeURIComponent(id) + '">' + esc(id) + " · " + esc(m.title) + "</a>";
-  }
+  function roleClass(r) { var k = String(r || "").toLowerCase(); if (k.indexOf("supp") >= 0 || k.indexOf("ساند") >= 0) return "supplement"; if (k.indexOf("practice") >= 0 || k.indexOf("تدريب") >= 0) return "practice"; if (k.indexOf("refer") >= 0 || k.indexOf("مرجع") >= 0) return "reference"; return "primary"; }
+  function roleRank(r) { var k = String(r || "").toLowerCase(); if (k.indexOf("primary") >= 0 || k.indexOf("anchor") >= 0 || k.indexOf("أساس") >= 0 || k.indexOf("مرتكز") >= 0) return 0; if (k.indexOf("supp") >= 0 || k.indexOf("ساند") >= 0) return 1; if (k.indexOf("practice") >= 0 || k.indexOf("تدريب") >= 0) return 2; return 3; }
+  function go(h) { location.hash = h; }
+  function modLink(id) { var m = byId[id]; if (!m) return bdi(id); return '<a href="#/module/' + encodeURIComponent(id) + '">' + bdi(id) + " · " + esc(mTitle(m)) + "</a>"; }
 
-  // ---- progress math ----
-  function trackPct(t) {
-    var ms = t.modules || []; if (!ms.length) return 0;
-    var d = ms.filter(function (m) { return isDone(m.id); }).length;
-    return Math.round((d / ms.length) * 100);
-  }
-  function overallPct() {
-    if (!allMods.length) return 0;
-    var d = allMods.filter(function (m) { return isDone(m.id); }).length;
-    return Math.round((d / allMods.length) * 100);
-  }
+  function trackPct(t2) { var ms = t2.modules || []; if (!ms.length) return 0; return Math.round(ms.filter(function (m) { return isDone(m.id); }).length / ms.length * 100); }
+  function overallPct() { if (!allMods.length) return 0; return Math.round(allMods.filter(function (m) { return isDone(m.id); }).length / allMods.length * 100); }
 
-  // ---- sidebar ----
+  /* ---------- sidebar ---------- */
   var navEl = document.getElementById("nav");
   var openTracks = {};
   function buildNav() {
     var h = "";
-    h += '<div class="nav-link" data-go="#/"><span class="ic">🏠</span> Home</div>';
-    h += '<div class="nav-section">Curriculum</div>';
-    TRACKS.forEach(function (t, i) {
-      var tid = "t" + i;
-      var pct = trackPct(t);
-      var open = openTracks[tid];
+    h += '<div class="nav-link" data-go="#/"><span class="ic">🏠</span> ' + t("home") + "</div>";
+    h += '<div class="nav-section">' + t("curriculum") + "</div>";
+    TRACKS.forEach(function (tr, i) {
+      var tid = "t" + i, pct = trackPct(tr), open = openTracks[tid];
       h += '<div class="nav-track ' + (open ? "open" : "") + '" data-track="' + tid + '">';
-      h += '<div class="nav-track-head" data-toggle="' + tid + '">' + esc(t.name) +
-           '<span class="chev">▸</span></div>';
-      h += '<div class="nav-track-bar"><i style="width:' + pct + '%"></i></div>';
-      h += '<div class="nav-modules">';
-      (t.modules || []).forEach(function (m) {
-        h += '<a class="nav-mod ' + (isDone(m.id) ? "done" : "") + '" href="#/module/' +
-             encodeURIComponent(m.id) + '" data-mid="' + esc(m.id) + '">' +
-             '<span class="dot">' + (isDone(m.id) ? "✓" : "○") + '</span>' +
-             '<span class="mid">' + esc(m.id) + '</span><span>' + esc(m.title) + '</span></a>';
-      });
+      h += '<div class="nav-track-head" data-toggle="' + tid + '">' + esc(trackName(tr)) + '<span class="chev">▸</span></div>';
+      h += '<div class="nav-track-bar"><i style="width:' + pct + '%"></i></div><div class="nav-modules">';
+      (tr.modules || []).forEach(function (m) { h += navMod(m); });
       h += "</div></div>";
     });
     if (SAUDI) {
-      h += '<div class="nav-section">Jurisdiction</div>';
-      var spct = SAUDI_MODS.length ? Math.round(SAUDI_MODS.filter(function(m){return isDone(m.id);}).length / SAUDI_MODS.length * 100) : 0;
-      var sOpen = openTracks["ksa"];
-      h += '<div class="nav-track ' + (sOpen ? "open" : "") + '" data-track="ksa">';
-      h += '<div class="nav-track-head" data-toggle="ksa">🇸🇦 Saudi (SOCPA) Track<span class="chev">▸</span></div>';
-      h += '<div class="nav-track-bar"><i style="width:' + spct + '%"></i></div>';
-      h += '<div class="nav-modules">';
-      h += '<a class="nav-mod" href="#/saudi"><span class="dot">★</span><span>Track overview</span></a>';
-      SAUDI_MODS.forEach(function (m) {
-        h += '<a class="nav-mod ' + (isDone(m.id) ? "done" : "") + '" href="#/module/' +
-             encodeURIComponent(m.id) + '" data-mid="' + esc(m.id) + '">' +
-             '<span class="dot">' + (isDone(m.id) ? "✓" : "○") + '</span>' +
-             '<span class="mid">' + esc(m.id) + '</span><span>' + esc(m.title) + '</span></a>';
-      });
+      h += '<div class="nav-section">' + t("jurisdiction") + "</div>";
+      var sp = SAUDI_MODS.length ? Math.round(SAUDI_MODS.filter(function (m) { return isDone(m.id); }).length / SAUDI_MODS.length * 100) : 0;
+      h += '<div class="nav-track ' + (openTracks.ksa ? "open" : "") + '" data-track="ksa">';
+      h += '<div class="nav-track-head" data-toggle="ksa">🇸🇦 ' + t("saudiTrack") + '<span class="chev">▸</span></div>';
+      h += '<div class="nav-track-bar"><i style="width:' + sp + '%"></i></div><div class="nav-modules">';
+      h += '<a class="nav-mod" href="#/saudi"><span class="dot">★</span><span>' + t("trackOverview") + "</span></a>";
+      SAUDI_MODS.forEach(function (m) { h += navMod(m); });
       h += "</div></div>";
     }
-    h += '<div class="nav-section">More</div>';
-    h += '<div class="nav-link" data-go="#/projects"><span class="ic">🛠️</span> Projects</div>';
-    h += '<div class="nav-link" data-go="#/certs"><span class="ic">🎓</span> Certifications</div>';
-    h += '<div class="nav-link" data-go="#/tooling"><span class="ic">🧰</span> Tooling</div>';
-    h += '<div class="nav-link" data-go="#/career"><span class="ic">💼</span> Career &amp; FAQ</div>';
-    h += '<div class="nav-link" data-go="#/about"><span class="ic">ℹ️</span> About</div>';
+    h += '<div class="nav-section">' + t("more") + "</div>";
+    if (D.landscape) h += '<div class="nav-link" data-go="#/arabic"><span class="ic">📺</span> ' + t("arabicRes") + "</div>";
+    h += '<div class="nav-link" data-go="#/projects"><span class="ic">🛠️</span> ' + t("projects") + "</div>";
+    h += '<div class="nav-link" data-go="#/certs"><span class="ic">🎓</span> ' + t("certifications") + "</div>";
+    h += '<div class="nav-link" data-go="#/tooling"><span class="ic">🧰</span> ' + t("tooling") + "</div>";
+    h += '<div class="nav-link" data-go="#/career"><span class="ic">💼</span> ' + t("career") + "</div>";
+    h += '<div class="nav-link" data-go="#/about"><span class="ic">ℹ️</span> ' + t("about") + "</div>";
     navEl.innerHTML = h;
     highlightNav();
   }
+  function navMod(m) {
+    return '<a class="nav-mod ' + (isDone(m.id) ? "done" : "") + '" href="#/module/' + encodeURIComponent(m.id) + '" data-mid="' + esc(m.id) + '">' +
+      '<span class="dot">' + (isDone(m.id) ? "✓" : "○") + "</span>" + '<span class="mid">' + bdi(m.id) + "</span><span>" + esc(mTitle(m)) + "</span></a>";
+  }
+  function trackName(tr) { return rtl() && tr.nameAr ? tr.nameAr : tr.name; }
   navEl.addEventListener("click", function (e) {
     var tog = e.target.closest("[data-toggle]");
     if (tog) { var id = tog.getAttribute("data-toggle"); openTracks[id] = !openTracks[id]; buildNav(); return; }
-    var g = e.target.closest("[data-go]");
-    if (g) { go(g.getAttribute("data-go")); closeSidebar(); return; }
-    var a = e.target.closest("a"); if (a) closeSidebar();
+    var g = e.target.closest("[data-go]"); if (g) { go(g.getAttribute("data-go")); closeSidebar(); return; }
+    if (e.target.closest("a")) closeSidebar();
   });
   function highlightNav() {
     var hash = location.hash || "#/";
-    navEl.querySelectorAll(".nav-link").forEach(function (n) {
-      n.classList.toggle("active", n.getAttribute("data-go") === hash);
-    });
-    navEl.querySelectorAll(".nav-mod").forEach(function (n) {
-      var mid = n.getAttribute("data-mid");
-      n.classList.toggle("active", mid && hash === "#/module/" + encodeURIComponent(mid));
-    });
+    navEl.querySelectorAll(".nav-link").forEach(function (n) { n.classList.toggle("active", n.getAttribute("data-go") === hash); });
+    navEl.querySelectorAll(".nav-mod").forEach(function (n) { var mid = n.getAttribute("data-mid"); n.classList.toggle("active", mid && hash === "#/module/" + encodeURIComponent(mid)); });
   }
-  function refreshProgressUI() {
-    document.getElementById("progressChip").textContent = overallPct() + "%";
-    buildNav();
-  }
+  function refreshUI() { document.getElementById("progressChip").textContent = overallPct() + "%"; buildNav(); }
 
-  // ---- views ----
+  /* ---------- render ---------- */
   var main = document.getElementById("main");
-  function set(html) { main.innerHTML = html; main.scrollTop = 0; window.scrollTo(0, 0); main.focus(); highlightNav(); }
+  function set(html) { main.innerHTML = html; window.scrollTo(0, 0); main.focus(); highlightNav(); }
 
   function resourceHTML(r) {
     var ci = costInfo(r.cost);
     var url = r.url && /^https?:/i.test(r.url) ? r.url : "";
     var title = url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(r.title) + " ↗</a>" : esc(r.title);
-    var ar = /arabic|عرب/i.test((r.notes || "") + (r.title || "")) ? '<span class="badge ar">العربية · Arabic</span>' : "";
-    var meta = [];
-    if (r.provider) meta.push(esc(r.provider));
-    if (r.type) meta.push(esc(r.type));
+    var meta = []; if (r.provider) meta.push(esc(r.provider)); if (r.type) meta.push(esc(r.type));
     return '<div class="res"><div class="role ' + roleClass(r.role) + '"></div><div class="body">' +
-      '<div class="rtitle">' + title + "</div>" +
-      '<div class="rmeta">' + meta.join(" · ") +
-      ' <span class="badge ' + ci[0] + '">' + esc(ci[1]) + "</span>" +
-      (r.role ? ' <span class="badge role">' + esc(r.role) + "</span>" : "") + ar + "</div>" +
-      (r.notes ? '<div class="notes">' + esc(r.notes) + "</div>" : "") +
-      "</div></div>";
+      '<div class="rtitle">' + title + "</div><div class=\"rmeta\">" + meta.join(" · ") +
+      ' <span class="badge ' + ci[0] + '">' + esc(ci[1]) + "</span>" + (r.role ? ' <span class="badge role">' + esc(r.role) + "</span>" : "") + "</div>" +
+      (r.notes ? '<div class="notes">' + esc(r.notes) + "</div>" : "") + "</div></div>";
   }
 
   function renderModule(id) {
     var m = byId[id];
-    if (!m) { set('<div class="empty">Module not found.</div>'); return; }
+    if (!m) { set('<div class="empty">' + t("notFound") + "</div>"); return; }
     var saudi = !!(m.overlaysGlobalModules && m.overlaysGlobalModules.length);
     var flat = saudi ? SAUDI_MODS : flatGlobal;
-    var idx = flat.indexOf(m);
-    var prev = idx > 0 ? flat[idx - 1] : null;
-    var next = idx >= 0 && idx < flat.length - 1 ? flat[idx + 1] : null;
-
+    var idx = flat.indexOf(m), prev = idx > 0 ? flat[idx - 1] : null, next = (idx >= 0 && idx < flat.length - 1) ? flat[idx + 1] : null;
     var h = "";
-    h += '<div class="crumb"><a href="#/">Home</a> › ' +
-      (saudi ? '<a href="#/saudi">Saudi (SOCPA) Track</a>' : '<a href="#/track/' + encodeURIComponent(m.track) + '">' + esc(m.track) + "</a>") +
-      " › " + esc(m.id) + "</div>";
-    h += '<div class="mod-head"><span class="id">' + esc(m.id) + '</span><h1 style="flex:1;min-width:240px">' + esc(m.title) + "</h1></div>";
-
+    h += '<div class="crumb"><a href="#/">' + t("home") + "</a> › " +
+      (saudi ? '<a href="#/saudi">' + t("saudiTrack") + "</a>" : '<a href="#/track/' + encodeURIComponent(m.track) + '">' + esc(trackNameById(m.track)) + "</a>") + " › " + bdi(m.id) + "</div>";
+    h += '<div class="mod-head"><span class="id">' + bdi(m.id) + '</span><h1 style="flex:1;min-width:240px">' + esc(mTitle(m)) + "</h1></div>";
     var pills = [];
-    if (m.estimatedHours) pills.push('<span class="pill">⏱️ <b>' + esc(m.estimatedHours) + "</b></span>");
-    if (m.track) pills.push('<span class="pill">' + esc(m.track) + "</span>");
-    if (m.prerequisites && m.prerequisites.length)
-      pills.push('<span class="pill">Prereqs: ' + m.prerequisites.map(function (p) { return modLink(p); }).join(", ") + "</span>");
-    else pills.push('<span class="pill">Prereqs: <b>none</b></span>');
+    if (m.estimatedHours) pills.push('<span class="pill">⏱️ <b>' + bdi(m.estimatedHours) + "</b></span>");
+    pills.push('<span class="pill">' + esc(trackNameById(m.track)) + "</span>");
+    if (m.prerequisites && m.prerequisites.length) pills.push('<span class="pill">' + t("prereqs") + ": " + m.prerequisites.map(modLink).join("، ") + "</span>");
+    else pills.push('<span class="pill">' + t("prereqs") + ": <b>" + t("none") + "</b></span>");
     h += '<div class="metarow">' + pills.join("") + "</div>";
-
-    if (saudi) {
-      var reads = m.overlaysGlobalModules.map(function (p) { return modLink(p); }).join(" &nbsp;·&nbsp; ");
-      h += '<div class="callout gold"><span class="lab">🇸🇦 Saudi overlay — read these global modules first</span>' + reads + "</div>";
-    }
-    if (m.summary) h += "<p class=\"lede\">" + esc(m.summary) + "</p>";
-    if (m.whyItMatters) h += '<div class="callout why"><span class="lab">Why it matters</span>' + esc(m.whyItMatters) + "</div>";
-
-    if (m.outcomes && m.outcomes.length) {
-      h += "<h2>What you'll be able to do</h2><ul class=\"clean\">";
-      m.outcomes.forEach(function (o) { h += "<li>" + esc(o) + "</li>"; });
-      h += "</ul>";
-    }
-    if (m.resources && m.resources.length) {
-      h += "<h2>Resources</h2>";
-      m.resources.slice().sort(function (a, b) { return roleRank(a.role) - roleRank(b.role); })
-        .forEach(function (r) { h += resourceHTML(r); });
-    }
-    if (m.project) h += '<h2>🛠️ Project</h2><div class="callout gold"><span class="lab">Build this</span>' + esc(m.project) + "</div>";
-    if (m.milestoneCheck) h += '<h2>✅ Checkpoint</h2><div class="callout"><span class="lab">You\'re done when</span>' + esc(m.milestoneCheck) + "</div>";
-
-    if (m.flags && m.flags.length) {
-      h += '<details class="flags"><summary>Curation &amp; verification notes (' + m.flags.length + ")</summary><ul>";
-      m.flags.forEach(function (f) { h += "<li>" + esc(f) + "</li>"; });
-      h += "</ul></details>";
-    }
-
-    h += '<div class="complete-bar"><label class="chk"><input type="checkbox" id="doneChk" ' +
-      (isDone(m.id) ? "checked" : "") + "> Mark this module complete</label>" +
-      '<span class="muted" style="margin-left:auto;font-size:13px">' + (idx + 1) + " of " + flat.length + "</span></div>";
-
+    if (saudi) h += '<div class="callout gold"><span class="lab">🇸🇦 ' + t("readFirst") + "</span>" + m.overlaysGlobalModules.map(modLink).join(" &nbsp;·&nbsp; ") + "</div>";
+    if (mSum(m)) h += '<p class="lede">' + esc(mSum(m)) + "</p>";
+    if (mWhy(m)) h += '<div class="callout why"><span class="lab">' + t("why") + "</span>" + esc(mWhy(m)) + "</div>";
+    var outs = mOut(m);
+    if (outs.length) { h += "<h2>" + t("byEnd") + "</h2><ul class=\"clean\">"; outs.forEach(function (o) { h += "<li>" + esc(o) + "</li>"; }); h += "</ul>"; }
+    if (rtl() && m.arabicCoverageNote) h += '<div class="section-note"><b>' + t("arCoverage") + ":</b> " + esc(m.arabicCoverageNote) + "</div>";
+    var pr = primaryRes(m);
+    if (pr.length) { h += "<h2>" + t("resources") + "</h2>"; pr.slice().sort(function (a, b) { return roleRank(a.role) - roleRank(b.role); }).forEach(function (r) { h += resourceHTML(r); }); }
+    var sr = secondaryRes(m);
+    if (sr.length) { h += '<details class="flags"><summary>' + t("engRes") + " (" + sr.length + ")</summary>"; sr.slice().sort(function (a, b) { return roleRank(a.role) - roleRank(b.role); }).forEach(function (r) { h += resourceHTML(r); }); h += "</details>"; }
+    if (mProj(m)) h += "<h2>🛠️ " + t("project") + '</h2><div class="callout gold"><span class="lab">' + t("buildThis") + "</span>" + esc(mProj(m)) + "</div>";
+    if (mCheck(m)) h += "<h2>✅ " + t("checkpoint") + '</h2><div class="callout"><span class="lab">' + t("doneWhen") + "</span>" + esc(mCheck(m)) + "</div>";
+    if (m.flags && m.flags.length) { h += '<details class="flags"><summary>' + t("curationNotes") + " (" + m.flags.length + ")</summary><ul>"; m.flags.forEach(function (f) { h += "<li>" + esc(f) + "</li>"; }); h += "</ul></details>"; }
+    h += '<div class="complete-bar"><label class="chk"><input type="checkbox" id="doneChk" ' + (isDone(m.id) ? "checked" : "") + "> " + t("markDone") + "</label>" +
+      '<span class="muted" style="margin-inline-start:auto;font-size:13px">' + bdi((idx + 1) + " " + t("ofN") + " " + flat.length) + "</span></div>";
+    var aPrev = rtl() ? "→" : "←", aNext = rtl() ? "←" : "→";
     h += '<div class="prevnext">';
-    h += prev ? '<a href="#/module/' + encodeURIComponent(prev.id) + '"><div class="dir">← Previous</div><div class="t">' + esc(prev.id) + " " + esc(prev.title) + "</div></a>" : "<span></span>";
-    h += next ? '<a class="next" href="#/module/' + encodeURIComponent(next.id) + '"><div class="dir">Next →</div><div class="t">' + esc(next.id) + " " + esc(next.title) + "</div></a>" : "<span></span>";
+    h += prev ? '<a href="#/module/' + encodeURIComponent(prev.id) + '"><div class="dir">' + aPrev + " " + t("prev") + "</div><div class=\"t\">" + bdi(prev.id) + " " + esc(mTitle(prev)) + "</div></a>" : "<span></span>";
+    h += next ? '<a class="next" href="#/module/' + encodeURIComponent(next.id) + '"><div class="dir">' + t("next") + " " + aNext + "</div><div class=\"t\">" + bdi(next.id) + " " + esc(mTitle(next)) + "</div></a>" : "<span></span>";
     h += "</div>";
-
     set(h);
-    var chk = document.getElementById("doneChk");
-    if (chk) chk.addEventListener("change", function () { toggleDone(m.id, chk.checked); });
+    var chk = document.getElementById("doneChk"); if (chk) chk.addEventListener("change", function () { toggleDone(m.id, chk.checked); });
   }
+  function trackNameById(name) { var tr = TRACKS.filter(function (x) { return x.name === name; })[0]; return tr ? trackName(tr) : name; }
 
   function renderTrack(name) {
-    var t = TRACKS.filter(function (x) { return x.name === name; })[0];
-    if (!t) { set('<div class="empty">Track not found.</div>'); return; }
-    var h = '<div class="crumb"><a href="#/">Home</a> › ' + esc(t.name) + "</div>";
-    h += "<h1>" + esc(t.name) + "</h1>";
-    h += '<p class="lede">' + (t.modules || []).length + " modules · " + trackPct(t) + "% complete</p>";
-    h += '<div class="grid">';
-    (t.modules || []).forEach(function (m) {
-      var pct = isDone(m.id) ? 100 : 0;
-      h += '<a class="card" href="#/module/' + encodeURIComponent(m.id) + '">' +
-        '<div class="eyebrow">' + esc(m.id) + (isDone(m.id) ? " · ✓ done" : "") + "</div>" +
-        "<h3>" + esc(m.title) + "</h3>" +
-        "<p>" + esc((m.summary || "").slice(0, 130)) + ((m.summary || "").length > 130 ? "…" : "") + "</p>" +
-        '<div class="meta">⏱️ ' + esc(m.estimatedHours || "—") + " · " + ((m.resources || []).length) + " resources</div>" +
-        '<div class="meter"><i style="width:' + pct + '%"></i></div></a>';
-    });
-    h += "</div>";
-    set(h);
+    var tr = TRACKS.filter(function (x) { return x.name === name; })[0];
+    if (!tr) { set('<div class="empty">' + t("notFound") + "</div>"); return; }
+    var h = '<div class="crumb"><a href="#/">' + t("home") + "</a> › " + esc(trackName(tr)) + "</div><h1>" + esc(trackName(tr)) + "</h1>";
+    h += '<p class="lede">' + bdi((tr.modules || []).length) + " " + t("modules") + " · " + trackPct(tr) + "% " + t("completed") + "</p><div class=\"grid\">";
+    (tr.modules || []).forEach(function (m) { h += card(m); });
+    h += "</div>"; set(h);
+  }
+  function card(m) {
+    return '<a class="card" href="#/module/' + encodeURIComponent(m.id) + '"><div class="eyebrow">' + bdi(m.id) + (isDone(m.id) ? " · ✓" : "") + "</div><h3>" + esc(mTitle(m)) + "</h3>" +
+      "<p>" + esc((mSum(m) || "").slice(0, 120)) + "…</p>" +
+      '<div class="meta">⏱️ ' + bdi(m.estimatedHours || "—") + " · " + ((primaryRes(m) || []).length) + " " + t("resources") + "</div>" +
+      '<div class="meter"><i style="width:' + (isDone(m.id) ? 100 : 0) + '%"></i></div></a>';
   }
 
   function renderHome() {
-    var st = D.stats || {};
-    var h = "";
-    h += '<div class="dedication"><span class="seal">📒</span><div>For <b>Abdulaziz</b> — start with a single debit; finish fluent in the language of business. This whole path is yours, free forever. Go build something. 🇸🇦</div></div>';
-    h += '<div class="hero"><div class="kicker">Free · Self-paced · Project-driven</div>';
-    h += "<h1>" + esc((D.intro && D.intro.title) || "The Open Accounting Path") + "</h1>";
-    if (D.intro && D.intro.tagline) h += '<div class="tagline">' + esc(D.intro.tagline) + "</div>";
-    h += '<p class="lede">' + esc((D.intro && D.intro.philosophy ? D.intro.philosophy.split("\n")[0] : "From zero to professionally competent in accounting — built on the best free resources on the web.")) + "</p>";
-    h += '<div class="stats">' +
-      stat(st.modules, "modules") + stat(st.resources, "free resources") +
-      stat(st.projects, "projects") + stat(st.certs, "cert roadmaps") +
-      stat(overallPct() + "%", "you've completed") + "</div>";
+    var st = D.stats || {}, intro = D.intro || {};
+    var ded = rtl()
+      ? 'لِصديقي <b>عبدالعزيز</b> — ابدأ بقيدٍ واحد، وانتهِ متقنًا للغة الأعمال. هذا المسار كلّه لك، مجانًا للأبد. انطلق وابْنِ شيئًا. 🇸🇦'
+      : 'For <b>Abdulaziz</b> — start with a single debit; finish fluent in the language of business. This whole path is yours, free forever. Go build something. 🇸🇦';
+    var h = '<div class="dedication"><span class="seal">📒</span><div>' + ded + "</div></div>";
+    h += '<div class="hero"><div class="kicker">' + t("kicker") + "</div>";
+    h += "<h1>" + esc(pk(intro, "title", "titleAr")) + "</h1>";
+    if (pk(intro, "tagline", "taglineAr")) h += '<div class="tagline">' + esc(pk(intro, "tagline", "taglineAr")) + "</div>";
+    var phil = (pk(intro, "philosophy", "philosophyAr") || "").split("\n")[0];
+    h += '<p class="lede">' + esc(phil) + "</p>";
+    h += '<div class="stats">' + stat(st.modules, t("modules")) + stat(st.resources, t("freeRes")) + stat(st.projects, t("projectsCount")) + stat(st.certs, t("certRoadmaps")) + stat(overallPct() + "%", t("completed")) + "</div>";
     var first = flatGlobal[0];
     h += '<div class="btn-row">';
-    if (first) h += '<a class="btn" href="#/module/' + encodeURIComponent(first.id) + '">Start at module ' + esc(first.id) + " →</a>";
-    if (SAUDI) h += '<a class="btn ghost" href="#/saudi">🇸🇦 Saudi (SOCPA) track</a>';
+    if (first) h += '<a class="btn" href="#/module/' + encodeURIComponent(first.id) + '">' + t("startAt") + " " + bdi(first.id) + " " + (rtl() ? "←" : "→") + "</a>";
+    if (SAUDI) h += '<a class="btn ghost" href="#/saudi">🇸🇦 ' + t("saudiTrack") + "</a>";
     h += "</div></div>";
-
-    h += "<h2>The path</h2>";
-    h += '<div class="grid">';
-    TRACKS.forEach(function (t) {
-      var pct = trackPct(t);
-      h += '<a class="card" href="#/track/' + encodeURIComponent(t.name) + '">' +
-        '<div class="eyebrow">' + (t.modules || []).length + " modules · " + pct + "%</div>" +
-        "<h3>" + esc(t.name) + "</h3>" +
-        '<div class="meter"><i style="width:' + pct + '%"></i></div></a>';
+    h += "<h2>" + t("thePath") + "</h2><div class=\"grid\">";
+    TRACKS.forEach(function (tr) {
+      h += '<a class="card" href="#/track/' + encodeURIComponent(tr.name) + '"><div class="eyebrow">' + bdi((tr.modules || []).length) + " " + t("modules") + " · " + trackPct(tr) + "%</div><h3>" + esc(trackName(tr)) + "</h3><div class=\"meter\"><i style=\"width:" + trackPct(tr) + "%\"></i></div></a>";
     });
     h += "</div>";
-
-    if (SAUDI) {
-      h += '<a class="card" style="display:block;margin-top:16px;border-color:var(--green)" href="#/saudi">' +
-        '<div class="eyebrow">🇸🇦 Jurisdiction track</div><h3>' + esc(SAUDI.title || "Saudi (SOCPA) Track") + "</h3>" +
-        "<p>" + esc((SAUDI.tagline || SAUDI.intro || "").slice(0, 150)) + "…</p></a>";
-    }
-
-    if (D.intro && D.intro.howToUse) {
-      h += "<h2>How to use this</h2><ul class=\"clean\">";
-      D.intro.howToUse.slice(0, 6).forEach(function (s) { h += "<li>" + esc(s) + "</li>"; });
-      h += '</ul><p class="muted"><a href="#/about">More about the philosophy, principles &amp; staying accountable →</a></p>';
-    }
+    if (SAUDI) h += '<a class="card" style="display:block;margin-top:16px;border-color:var(--green)" href="#/saudi"><div class="eyebrow">🇸🇦 ' + t("jurisdiction") + '</div><h3>' + esc(pk(SAUDI, "title", "titleAr")) + "</h3><p>" + esc((pk(SAUDI, "tagline", "taglineAr") || pk(SAUDI, "intro", "introAr") || "").slice(0, 150)) + "…</p></a>";
+    var htu = pkArr(intro, "howToUse", "howToUseAr");
+    if (htu.length) { h += "<h2>" + t("howToUse") + "</h2><ul class=\"clean\">"; htu.slice(0, 6).forEach(function (s) { h += "<li>" + esc(s) + "</li>"; }); h += '</ul><p class="muted"><a href="#/about">' + t("moreAbout") + "</a></p>"; }
     set(h);
   }
-  function stat(v, l) { return '<div class="stat"><b>' + esc(v == null ? "—" : v) + "</b><span>" + esc(l) + "</span></div>"; }
+  function stat(v, l) { return '<div class="stat"><b>' + bdi(v == null ? "—" : v) + "</b><span>" + esc(l) + "</span></div>"; }
 
   function renderSaudi() {
-    if (!SAUDI) { set('<div class="empty">Saudi track not available.</div>'); return; }
-    var h = '<div class="crumb"><a href="#/">Home</a> › Saudi (SOCPA) Track</div>';
-    h += '<div class="ksa"><h1>' + esc(SAUDI.title || "Saudi (SOCPA) Track") + "</h1>";
-    if (SAUDI.tagline) h += '<div class="tagline">' + esc(SAUDI.tagline) + "</div>";
-    if (SAUDI.intro) h += "<p>" + esc(SAUDI.intro) + "</p>";
-    if (SAUDI.keyFacts && SAUDI.keyFacts.length) {
-      h += '<div class="facts">';
-      SAUDI.keyFacts.forEach(function (f) { h += '<div class="f">' + esc(f) + "</div>"; });
-      h += "</div>";
-    }
+    if (!SAUDI) { set('<div class="empty">' + t("empty") + "</div>"); return; }
+    var h = '<div class="crumb"><a href="#/">' + t("home") + "</a> › " + t("saudiTrack") + "</div>";
+    h += '<div class="ksa"><h1>' + esc(pk(SAUDI, "title", "titleAr")) + "</h1>";
+    if (pk(SAUDI, "tagline", "taglineAr")) h += '<div class="tagline">' + esc(pk(SAUDI, "tagline", "taglineAr")) + "</div>";
+    if (pk(SAUDI, "intro", "introAr")) h += "<p>" + esc(pk(SAUDI, "intro", "introAr")) + "</p>";
+    var kf = pkArr(SAUDI, "keyFacts", "keyFactsAr");
+    if (kf.length) { h += '<div class="facts">'; kf.forEach(function (f) { h += '<div class="f">' + esc(f) + "</div>"; }); h += "</div>"; }
     h += "</div>";
-
-    h += '<div class="section-note">This track does <b>not</b> replace the global core. For each row below, complete the listed global module(s) first, then layer the Saudi overlay on top.</div>';
-
-    if (SAUDI.howToUse && SAUDI.howToUse.length) {
-      h += "<h2>How to use this track</h2><ul class=\"clean\">";
-      SAUDI.howToUse.forEach(function (s) { h += "<li>" + esc(s) + "</li>"; });
-      h += "</ul>";
-    }
-
-    h += "<h2>Saudi overlay modules</h2>";
-    h += '<div class="grid">';
+    h += '<div class="section-note">' + t("notReplace") + "</div>";
+    var htu = pkArr(SAUDI, "howToUse", "howToUseAr");
+    if (htu.length) { h += "<h2>" + t("howToUseTrack") + "</h2><ul class=\"clean\">"; htu.forEach(function (s) { h += "<li>" + esc(s) + "</li>"; }); h += "</ul>"; }
+    h += "<h2>" + t("saudiModulesH") + "</h2><div class=\"grid\">";
     SAUDI_MODS.forEach(function (m) {
-      h += '<a class="card" href="#/module/' + encodeURIComponent(m.id) + '">' +
-        '<div class="eyebrow">' + esc(m.id) + (isDone(m.id) ? " · ✓" : "") + "</div><h3>" + esc(m.title) + "</h3>" +
-        "<p>" + esc((m.summary || "").slice(0, 120)) + "…</p>" +
-        (m.overlaysGlobalModules ? '<div class="meta">Overlays: ' + esc(m.overlaysGlobalModules.join(", ")) + "</div>" : "") +
-        "</a>";
+      h += '<a class="card" href="#/module/' + encodeURIComponent(m.id) + '"><div class="eyebrow">' + bdi(m.id) + (isDone(m.id) ? " · ✓" : "") + "</div><h3>" + esc(mTitle(m)) + "</h3><p>" + esc((mSum(m) || "").slice(0, 110)) + "…</p>" + (m.overlaysGlobalModules ? '<div class="meta">' + t("overlays") + ": " + bdi(m.overlaysGlobalModules.join(", ")) + "</div>" : "") + "</a>";
     });
     h += "</div>";
-
     if (SAUDI.overlayMap && SAUDI.overlayMap.length) {
-      h += "<h2>Overlay map</h2><table class=\"tbl\"><tr><th>Saudi module</th><th>Pairs with global</th><th>What changes</th></tr>";
-      SAUDI.overlayMap.forEach(function (o) {
-        h += "<tr><td><b>" + esc(o.saudiModule) + "</b></td><td>" + esc((o.pairsWithGlobal || []).join(", ")) + "</td><td>" + esc(o.whatChanges) + "</td></tr>";
-      });
+      h += "<h2>" + t("overlayMap") + "</h2><table class=\"tbl\"><tr><th>" + t("saudiCol") + "</th><th>" + t("pairsCol") + "</th><th>" + t("changesCol") + "</th></tr>";
+      SAUDI.overlayMap.forEach(function (o) { h += "<tr><td><b>" + bdi(o.saudiModule) + "</b></td><td>" + bdi((o.pairsWithGlobal || []).join(", ")) + "</td><td>" + esc(rtl() && o.whatChangesAr ? o.whatChangesAr : o.whatChanges) + "</td></tr>"; });
       h += "</table>";
     }
     if (SAUDI.regulators && SAUDI.regulators.length) {
-      h += "<h2>Who's who — Saudi regulators</h2><table class=\"tbl\"><tr><th>Body</th><th>Role</th></tr>";
-      SAUDI.regulators.forEach(function (r) {
-        var nm = r.url ? '<a href="' + esc(r.url) + '" target="_blank" rel="noopener">' + esc(r.name) + " ↗</a>" : esc(r.name);
-        h += "<tr><td><b>" + nm + "</b></td><td>" + esc(r.role) + "</td></tr>";
-      });
+      h += "<h2>" + t("regulators") + "</h2><table class=\"tbl\"><tr><th>" + t("bodyCol") + "</th><th>" + t("roleCol") + "</th></tr>";
+      SAUDI.regulators.forEach(function (r) { var nm = r.url ? '<a href="' + esc(r.url) + '" target="_blank" rel="noopener">' + esc(r.name) + " ↗</a>" : esc(r.name); h += "<tr><td><b>" + nm + "</b></td><td>" + esc(rtl() && r.roleAr ? r.roleAr : r.role) + "</td></tr>"; });
       h += "</table>";
     }
+    set(h);
+  }
+
+  function renderArabic() {
+    var L = D.landscape; if (!L) { set('<div class="empty">' + t("empty") + "</div>"); return; }
+    var h = '<div class="crumb"><a href="#/">' + t("home") + "</a> › " + t("arabicRes") + "</div><h1>" + t("arResIntroNav") + "</h1>";
+    if (L.introAr || L.intro) h += '<p class="lede">' + esc(L.introAr || L.intro) + "</p>";
+    (L.channels || []).forEach(function (c) {
+      var url = c.url && /^https?:/i.test(c.url) ? c.url : "";
+      var title = url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(c.name) + " ↗</a>" : esc(c.name);
+      h += '<div class="res"><div class="role primary"></div><div class="body"><div class="rtitle">' + title + "</div>" +
+        '<div class="rmeta">' + (c.type ? esc(c.type) : "") + ' <span class="badge free">' + t("free") + "</span></div>" +
+        (c.focusAr || c.focus ? '<div class="notes"><b>' + esc(c.focusAr || c.focus) + "</b></div>" : "") +
+        (c.notesAr || c.notes ? '<div class="notes">' + esc(c.notesAr || c.notes) + "</div>" : "") + "</div></div>";
+    });
     set(h);
   }
 
   function renderProjects() {
     var ps = D.projects || [];
-    var h = '<div class="crumb"><a href="#/">Home</a> › Projects</div><h1>Projects &amp; Portfolio</h1>';
-    h += '<p class="lede">You don\'t finish a module by watching videos — you finish it by building something. These capstones turn knowledge into a portfolio.</p>';
+    var h = '<div class="crumb"><a href="#/">' + t("home") + "</a> › " + t("projects") + "</div><h1>" + t("projects") + "</h1>";
     ps.forEach(function (p) {
-      h += "<h2>" + esc(p.title) + "</h2>";
-      var meta = [];
-      if (p.level) meta.push('<span class="pill"><b>' + esc(p.level) + "</b></span>");
-      if (p.afterModules && p.afterModules.length) meta.push('<span class="pill">After: ' + esc(p.afterModules.join(", ")) + "</span>");
+      h += "<h2>" + esc(pk(p, "title", "titleAr")) + "</h2>";
+      var meta = []; if (p.level) meta.push('<span class="pill"><b>' + esc(p.level) + "</b></span>"); if (p.afterModules && p.afterModules.length) meta.push('<span class="pill">' + t("after") + ": " + bdi(p.afterModules.join(", ")) + "</span>");
       if (meta.length) h += '<div class="metarow">' + meta.join("") + "</div>";
-      if (p.description) h += "<p>" + esc(p.description) + "</p>";
-      if (p.deliverable) h += '<div class="callout"><span class="lab">Deliverable</span>' + esc(p.deliverable) + "</div>";
-      if (p.skills && p.skills.length) h += '<p class="muted"><b>Skills:</b> ' + esc(p.skills.join(", ")) + "</p>";
-      if (p.resources && p.resources.length) p.resources.forEach(function (r) { h += resourceHTML(r); });
+      if (pk(p, "description", "descriptionAr")) h += "<p>" + esc(pk(p, "description", "descriptionAr")) + "</p>";
+      if (pk(p, "deliverable", "deliverableAr")) h += '<div class="callout"><span class="lab">' + t("deliverable") + "</span>" + esc(pk(p, "deliverable", "deliverableAr")) + "</div>";
+      if (p.skills && p.skills.length) h += '<p class="muted"><b>' + t("skills") + ":</b> " + esc(p.skills.join("، ")) + "</p>";
+      (p.resources || []).forEach(function (r) { h += resourceHTML(r); });
     });
     set(h);
   }
 
   function renderCerts() {
     var cs = D.certifications || [];
-    var h = '<div class="crumb"><a href="#/">Home</a> › Certifications</div><h1>Certification Roadmaps</h1>';
-    h += '<p class="lede">This path isn\'t a substitute for any licensing exam — it builds the knowledge so that, when you pick a credential, you study the format, not the material for the first time.</p>';
-    if (SAUDI) h += '<div class="section-note">Targeting Saudi Arabia? See the <a href="#/module/SA.9">SOCPA Fellowship &amp; certification roadmap</a> in the Saudi track.</div>';
+    var h = '<div class="crumb"><a href="#/">' + t("home") + "</a> › " + t("certifications") + "</div><h1>" + t("certifications") + "</h1>";
+    if (SAUDI) h += '<div class="section-note">' + (rtl() ? "تستهدف السعودية؟ راجع مسار زمالة SOCPA في " : "Targeting Saudi Arabia? See the SOCPA Fellowship roadmap in ") + '<a href="#/module/SA.9">' + (rtl() ? "المسار السعودي" : "the Saudi track") + ".</a></div>";
     cs.forEach(function (c) {
       h += "<h2>" + esc(c.name) + (c.body ? ' <span class="muted" style="font-size:15px">· ' + esc(c.body) + "</span>" : "") + "</h2>";
-      var meta = [];
-      if (c.region) meta.push('<span class="pill">' + esc(c.region) + "</span>");
-      if (c.costRange) meta.push('<span class="pill">Cost: <b>' + esc(c.costRange) + "</b></span>");
-      if (c.mapsToModules && c.mapsToModules.length) meta.push('<span class="pill">Modules: ' + esc(c.mapsToModules.join(", ")) + "</span>");
+      var meta = []; if (c.region) meta.push('<span class="pill">' + esc(c.region) + "</span>"); if (c.costRange) meta.push('<span class="pill">' + t("cost") + ": <b>" + esc(c.costRange) + "</b></span>"); if (c.mapsToModules && c.mapsToModules.length) meta.push('<span class="pill">' + t("mapsTo") + ": " + bdi(c.mapsToModules.join(", ")) + "</span>");
       if (meta.length) h += '<div class="metarow">' + meta.join("") + "</div>";
-      if (c.whoItsFor) h += "<p><b>Who it's for:</b> " + esc(c.whoItsFor) + "</p>";
-      if (c.prereqs) h += '<p class="muted"><b>Prerequisites:</b> ' + esc(c.prereqs) + "</p>";
-      if (c.notes) h += "<p>" + esc(c.notes) + "</p>";
-      if (c.freePrep && c.freePrep.length) c.freePrep.forEach(function (r) { h += resourceHTML(r); });
+      if (pk(c, "whoItsFor", "whoItsForAr")) h += "<p><b>" + t("whoFor") + ":</b> " + esc(pk(c, "whoItsFor", "whoItsForAr")) + "</p>";
+      if (pk(c, "prereqs", "prereqsAr")) h += '<p class="muted"><b>' + t("prereqs") + ":</b> " + esc(pk(c, "prereqs", "prereqsAr")) + "</p>";
+      if (pk(c, "notes", "notesAr")) h += "<p>" + esc(pk(c, "notes", "notesAr")) + "</p>";
+      (c.freePrep || []).forEach(function (r) { h += resourceHTML(r); });
     });
     set(h);
   }
 
   function renderTooling() {
     var ts = D.tooling || [];
-    var h = '<div class="crumb"><a href="#/">Home</a> › Tooling</div><h1>Tooling Tracks</h1>';
-    h += '<p class="lede">Concepts aren\'t enough — modern accountants live in spreadsheets, cloud software, and data tools. Work these alongside the core. Learn the manual method first, then automate.</p>';
-    ts.forEach(function (t) {
-      h += "<h2>" + esc(t.name) + "</h2>";
-      if (t.why) h += '<div class="callout why"><span class="lab">Why it matters</span>' + esc(t.why) + "</div>";
-      (t.resources || []).forEach(function (r) { h += resourceHTML(r); });
+    var h = '<div class="crumb"><a href="#/">' + t("home") + "</a> › " + t("tooling") + "</div><h1>" + t("tooling") + "</h1>";
+    ts.forEach(function (tr) {
+      h += "<h2>" + esc(tr.name) + "</h2>";
+      if (pk(tr, "why", "whyAr")) h += '<div class="callout why"><span class="lab">' + t("why") + "</span>" + esc(pk(tr, "why", "whyAr")) + "</div>";
+      (tr.resources || []).forEach(function (r) { h += resourceHTML(r); });
     });
     set(h);
   }
 
   function renderCareer() {
     var c = D.career || {};
-    var h = '<div class="crumb"><a href="#/">Home</a> › Career</div><h1>Career Paths &amp; FAQ</h1>';
+    var h = '<div class="crumb"><a href="#/">' + t("home") + "</a> › " + t("career") + "</div><h1>" + t("career") + "</h1><h2>" + t("careerPaths") + "</h2>";
     (c.paths || []).forEach(function (p) {
-      h += "<h2>" + esc(p.role) + "</h2>";
-      if (p.description) h += "<p>" + esc(p.description) + "</p>";
-      if (p.modulesNeeded && p.modulesNeeded.length) h += '<p class="muted"><b>Focus modules:</b> ' + esc(p.modulesNeeded.join(", ")) + "</p>";
-      if (p.certs && p.certs.length) h += '<p class="muted"><b>Credentials:</b> ' + esc(p.certs.join(", ")) + "</p>";
-      if (p.startingSignal) h += '<div class="callout"><span class="lab">Ready when</span>' + esc(p.startingSignal) + "</div>";
+      h += "<h3>" + esc(p.role) + "</h3>";
+      if (pk(p, "description", "descriptionAr")) h += "<p>" + esc(pk(p, "description", "descriptionAr")) + "</p>";
+      if (p.modulesNeeded && p.modulesNeeded.length) h += '<p class="muted"><b>' + t("focusModules") + ":</b> " + bdi(p.modulesNeeded.join(", ")) + "</p>";
+      if (p.certs && p.certs.length) h += '<p class="muted"><b>' + t("credentials") + ":</b> " + esc(p.certs.join("، ")) + "</p>";
+      if (pk(p, "startingSignal", "startingSignalAr")) h += '<div class="callout"><span class="lab">' + t("readyWhen") + "</span>" + esc(pk(p, "startingSignal", "startingSignalAr")) + "</div>";
     });
-    if (c.faq && c.faq.length) {
-      h += "<h2>FAQ</h2>";
-      c.faq.forEach(function (q) { h += '<div class="faq-q">' + esc(q.q) + "</div><p>" + esc(q.a) + "</p>"; });
-    }
+    if (c.faq && c.faq.length) { h += "<h2>" + t("faq") + "</h2>"; c.faq.forEach(function (q) { h += '<div class="faq-q">' + esc(pk(q, "q", "qAr")) + "</div><p>" + esc(pk(q, "a", "aAr")) + "</p>"; }); }
     set(h);
   }
 
   function renderAbout() {
     var i = D.intro || {};
-    var h = '<div class="crumb"><a href="#/">Home</a> › About</div><h1>About this curriculum</h1>';
-    if (i.whoIsThisFor) { h += "<h2>Who it's for</h2><p>" + esc(i.whoIsThisFor) + "</p>"; }
-    if (i.whatYouWontGet) { h += "<h2>What this is <em>not</em></h2><p>" + esc(i.whatYouWontGet) + "</p>"; }
-    if (i.philosophy) { h += "<h2>Philosophy</h2>"; i.philosophy.split("\n").forEach(function (p) { if (p.trim()) h += "<p>" + esc(p) + "</p>"; }); }
-    if (i.timeCommitment) { h += "<h2>Time commitment</h2><p>" + esc(i.timeCommitment) + "</p>"; }
-    if (i.principles && i.principles.length) { h += "<h2>Principles</h2><ul class=\"clean\">"; i.principles.forEach(function (p) { h += "<li>" + esc(p) + "</li>"; }); h += "</ul>"; }
-    if (i.accountability && i.accountability.length) { h += "<h2>Staying accountable</h2><ul class=\"clean\">"; i.accountability.forEach(function (p) { h += "<li>" + esc(p) + "</li>"; }); h += "</ul>"; }
-    if (i.jurisdictionNote) { h += "<h2>Jurisdictions</h2><p>" + esc(i.jurisdictionNote) + "</p>"; }
-    if (D.sequencing) { h += "<h2>Recommended sequencing</h2><p class=\"muted\" style=\"white-space:pre-wrap\">" + esc(D.sequencing) + "</p>"; }
-    h += '<h2>How it was built</h2><p class="muted">Designed by independent curriculum architects, resourced by web-research agents, adversarially link-verified, then graded against CPA/CMA/ACCA blueprints and gap-filled. Resources can still go stale — if a link has moved, search its title and provider.</p>';
-    h += '<p class="muted">Curriculum (roadmap, descriptions, projects) under CC BY-SA 4.0. Linked resources belong to their authors (OpenStax, Saylor, MIT OCW, AccountingCoach, IFRS Foundation, SOCPA, ZATCA, and many more).</p>';
+    var h = '<div class="crumb"><a href="#/">' + t("home") + "</a> › " + t("about") + "</div><h1>" + t("about") + "</h1>";
+    if (pk(i, "whoIsThisFor", "whoIsThisForAr")) h += "<h2>" + t("whoForH") + "</h2><p>" + esc(pk(i, "whoIsThisFor", "whoIsThisForAr")) + "</p>";
+    if (pk(i, "whatYouWontGet", "whatYouWontGetAr")) h += "<h2>" + t("notForTitle") + "</h2><p>" + esc(pk(i, "whatYouWontGet", "whatYouWontGetAr")) + "</p>";
+    if (pk(i, "philosophy", "philosophyAr")) { h += "<h2>" + t("philosophy") + "</h2>"; pk(i, "philosophy", "philosophyAr").split("\n").forEach(function (p) { if (p.trim()) h += "<p>" + esc(p) + "</p>"; }); }
+    if (pk(i, "timeCommitment", "timeCommitmentAr")) h += "<h2>" + t("timeC") + "</h2><p>" + esc(pk(i, "timeCommitment", "timeCommitmentAr")) + "</p>";
+    var pr = pkArr(i, "principles", "principlesAr");
+    if (pr.length) { h += "<h2>" + t("principles") + "</h2><ul class=\"clean\">"; pr.forEach(function (p) { h += "<li>" + esc(p) + "</li>"; }); h += "</ul>"; }
+    var ac = pkArr(i, "accountability", "accountabilityAr");
+    if (ac.length) { h += "<h2>" + t("accountability") + "</h2><ul class=\"clean\">"; ac.forEach(function (p) { h += "<li>" + esc(p) + "</li>"; }); h += "</ul>"; }
+    if (pk(i, "jurisdictionNote", "jurisdictionNoteAr")) h += "<h2>" + t("jurisdictions") + "</h2><p>" + esc(pk(i, "jurisdictionNote", "jurisdictionNoteAr")) + "</p>";
+    h += "<h2>" + t("builtH") + '</h2><p class="muted">' + t("builtP") + "</p>";
+    h += '<p class="muted">' + t("license") + "</p>";
     set(h);
   }
 
-  // ---- search ----
+  /* ---------- search ---------- */
   var searchEl = document.getElementById("search");
+  var searchActive = false;
   function renderSearch(q) {
     var ql = q.toLowerCase();
-    var hits = allMods.map(function (m) {
-      var hay = [m.id, m.title, m.summary, m.whyItMatters,
-        (m.outcomes || []).join(" "),
-        (m.resources || []).map(function (r) { return r.title + " " + r.provider + " " + r.notes; }).join(" ")
-      ].join(" ").toLowerCase();
-      return hay.indexOf(ql) >= 0 ? m : null;
-    }).filter(Boolean);
-    var h = "<h1>Search</h1><p class=\"lede\">" + hits.length + ' result' + (hits.length === 1 ? "" : "s") + ' for “' + esc(q) + "”</p>";
-    if (!hits.length) h += '<div class="empty">Nothing matched. Try a topic like “lease”, “zakat”, “cash flow”, or “audit”.</div>';
-    h += '<div class="grid">';
-    hits.forEach(function (m) {
-      h += '<a class="card" href="#/module/' + encodeURIComponent(m.id) + '"><div class="eyebrow">' + esc(m.id) + " · " + esc(m.track) + "</div><h3>" + esc(m.title) + "</h3><p>" + esc((m.summary || "").slice(0, 120)) + "…</p></a>";
+    var hits = allMods.filter(function (m) {
+      var hay = [m.id, m.title, m.titleAr, m.summary, m.summaryAr, m.whyItMatters, m.whyItMattersAr,
+        (m.outcomes || []).join(" "), (m.outcomesAr || []).join(" "),
+        (primaryRes(m) || []).map(function (r) { return r.title + " " + r.provider + " " + r.notes; }).join(" ")].join(" ").toLowerCase();
+      return hay.indexOf(ql) >= 0;
     });
-    h += "</div>";
-    main.innerHTML = h; window.scrollTo(0, 0);
+    var h = "<h1>" + t("searchTitle") + '</h1><p class="lede">' + bdi(hits.length) + " " + t("results") + " «" + esc(q) + "»</p><div class=\"grid\">";
+    hits.forEach(function (m) { h += '<a class="card" href="#/module/' + encodeURIComponent(m.id) + '"><div class="eyebrow">' + bdi(m.id) + " · " + esc(trackNameById(m.track)) + "</div><h3>" + esc(mTitle(m)) + "</h3><p>" + esc((mSum(m) || "").slice(0, 110)) + "…</p></a>"; });
+    h += "</div>"; main.innerHTML = h; window.scrollTo(0, 0);
   }
-  var searchActive = false;
   searchEl.addEventListener("input", function () {
     var q = searchEl.value.trim();
     if (q.length >= 2) { searchActive = true; renderSearch(q); }
     else if (searchActive) { searchActive = false; router(); }
   });
 
-  // ---- router ----
+  /* ---------- router ---------- */
   function router() {
     if (searchActive && searchEl.value.trim().length >= 2) { renderSearch(searchEl.value.trim()); return; }
     var hash = location.hash || "#/";
-    var parts = hash.replace(/^#\//, "").split("/");
-    var route = parts[0] || "";
-    if (route === "" ) return renderHome();
+    var parts = hash.replace(/^#\//, "").split("/"), route = parts[0] || "";
+    if (route === "") return renderHome();
     if (route === "module") return renderModule(decodeURIComponent(parts.slice(1).join("/")));
     if (route === "track") return renderTrack(decodeURIComponent(parts.slice(1).join("/")));
     if (route === "saudi") return renderSaudi();
+    if (route === "arabic") return renderArabic();
     if (route === "projects") return renderProjects();
     if (route === "certs") return renderCerts();
     if (route === "tooling") return renderTooling();
@@ -487,27 +468,41 @@
   }
   window.addEventListener("hashchange", router);
 
-  // ---- mobile sidebar ----
-  var sidebar = document.getElementById("sidebar"), scrim = document.getElementById("scrim");
-  function closeSidebar() { sidebar.classList.remove("open"); scrim.classList.remove("show"); }
-  document.getElementById("menuBtn").addEventListener("click", function () {
-    sidebar.classList.toggle("open"); scrim.classList.toggle("show");
-  });
-  scrim.addEventListener("click", closeSidebar);
-  document.getElementById("resetProgress").addEventListener("click", function () {
-    if (confirm("Clear all your progress?")) { done = new Set(); saveProgress(done); refreshProgressUI(); router(); }
+  /* ---------- language application ---------- */
+  function applyLang() {
+    document.documentElement.setAttribute("lang", LANG);
+    document.documentElement.setAttribute("dir", rtl() ? "rtl" : "ltr");
+    document.getElementById("langBtn").textContent = rtl() ? "EN" : "ع";
+    searchEl.setAttribute("placeholder", t("searchPh"));
+    document.getElementById("progressChip").setAttribute("title", rtl() ? "تقدّمك الكلّي" : "Your overall progress");
+    document.getElementById("resetProgress").textContent = t("reset");
+    var foot = document.getElementById("siteFoot");
+    foot.innerHTML = rtl()
+      ? '<span class="heart">♦</span> صُنع بمحبّة لصديقي <b>عبدالعزيز</b> — من أول قيد محاسبي إلى توقيع تقاريرك بنفسك. <span class="sep">·</span> مجاني للأبد <span class="sep">·</span> CC BY-SA 4.0'
+      : '<span class="heart">♦</span> Made with care for my friend <b>Abdulaziz</b> — from your first journal entry to signing your own audit opinions. <span class="sep">·</span> Free forever <span class="sep">·</span> CC BY-SA 4.0';
+  }
+  document.getElementById("langBtn").addEventListener("click", function () {
+    LANG = rtl() ? "en" : "ar"; localStorage.setItem(LKEY, LANG);
+    applyLang(); buildNav(); router();
   });
 
-  // ---- boot ----
-  // auto-open the track of the current module
+  /* ---------- mobile sidebar ---------- */
+  var sidebar = document.getElementById("sidebar"), scrim = document.getElementById("scrim");
+  function closeSidebar() { sidebar.classList.remove("open"); scrim.classList.remove("show"); }
+  document.getElementById("menuBtn").addEventListener("click", function () { sidebar.classList.toggle("open"); scrim.classList.toggle("show"); });
+  scrim.addEventListener("click", closeSidebar);
+  document.getElementById("resetProgress").addEventListener("click", function () { if (confirm(t("confirmReset"))) { done = new Set(); saveP(done); refreshUI(); router(); } });
+
+  /* ---------- boot ---------- */
   (function preopen() {
     var hash = location.hash || "";
     if (hash.indexOf("#/module/") === 0) {
       var id = decodeURIComponent(hash.replace("#/module/", ""));
-      TRACKS.forEach(function (t, i) { if ((t.modules || []).some(function (m) { return m.id === id; })) openTracks["t" + i] = true; });
-      if (SAUDI_MODS.some(function (m) { return m.id === id; })) openTracks["ksa"] = true;
+      TRACKS.forEach(function (tr, i) { if ((tr.modules || []).some(function (m) { return m.id === id; })) openTracks["t" + i] = true; });
+      if (SAUDI_MODS.some(function (m) { return m.id === id; })) openTracks.ksa = true;
     }
   })();
+  applyLang();
   buildNav();
   document.getElementById("progressChip").textContent = overallPct() + "%";
   router();

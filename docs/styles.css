@@ -1,20 +1,37 @@
 :root{
-  --green:#137a4b; --green-2:#0e5e3a; --green-soft:#e6f3ec;
+  /* NAWAQIS purple */
+  --green:#563D96; --green-2:#45307a; --green-soft:#efeaf8;
   --gold:#b8862f; --gold-soft:#f6eeda;
-  --ink:#16221c; --muted:#5d6b63; --line:#e2e7e3;
-  --paper:#f6f8f6; --card:#ffffff; --hover:#eef3ef;
-  --shadow:0 1px 2px rgba(20,40,30,.06),0 6px 20px rgba(20,40,30,.05);
+  --ink:#1c1830; --muted:#655f7a; --line:#e6e2ef;
+  --paper:#f7f6fb; --card:#ffffff; --hover:#f0ecf8;
+  --shadow:0 1px 2px rgba(40,30,70,.06),0 6px 20px rgba(40,30,70,.06);
   --radius:14px; --sidebar-w:300px; --topbar-h:58px;
   --sans:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
   --serif:'Fraunces',Georgia,'Times New Roman',serif;
+  --ar-sans:'Tajawal','Noto Kufi Arabic',system-ui,sans-serif;
+  --ar-serif:'Cairo','Tajawal',serif;
 }
 [data-theme="dark"]{
-  --green:#3fbb82; --green-2:#69d3a0; --green-soft:#15281f;
+  --green:#b09ae6; --green-2:#c8b6f0; --green-soft:#241a3a;
   --gold:#d9b25e; --gold-soft:#2a2415;
-  --ink:#e8efe9; --muted:#9bab9f; --line:#243029;
-  --paper:#0e1512; --card:#141c18; --hover:#1a241e;
+  --ink:#ece9f5; --muted:#a59fb8; --line:#2a2440;
+  --paper:#0f0d18; --card:#16131f; --hover:#1d1830;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
 }
+/* Arabic / RTL */
+[dir="rtl"]{ --sans:var(--ar-sans); --serif:var(--ar-serif); }
+[dir="rtl"] body{ font-family:var(--ar-sans); letter-spacing:0; }
+[dir="rtl"] .sidebar{ border-right:none; border-left:1px solid var(--line); }
+[dir="rtl"] .nav-modules{ border-left:none; border-right:2px solid var(--line); padding-left:0; padding-right:6px; margin-left:0; margin-right:6px; }
+[dir="rtl"] .nav-track-head .chev{ transform:scaleX(-1); }
+[dir="rtl"] .nav-track.open .chev{ transform:rotate(90deg); }
+[dir="rtl"] .section-note{ border-left:none; border-right:3px solid var(--green); border-radius:8px 0 0 8px; }
+[dir="rtl"] .res .role{ /* color bar sits at inline-start automatically via flex */ }
+[dir="rtl"] .prevnext .next{ text-align:left; }
+[dir="rtl"] .lede,[dir="rtl"] .main p,[dir="rtl"] .callout,[dir="rtl"] .res .notes{ line-height:1.9; }
+[dir="rtl"] .crumb{ direction:rtl; }
+bdi,.num{ unicode-bidi:isolate; }
+.lang-btn{ font-weight:700; font-size:13px; min-width:42px; }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{
@@ -200,9 +217,9 @@ table.tbl th,table.tbl td{text-align:left;padding:10px 12px;border-bottom:1px so
 table.tbl th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
 
 /* Saudi banner */
-.ksa{background:linear-gradient(135deg,#0d5e3a,#137a4b);color:#eafff3;border-radius:var(--radius);padding:26px 28px;margin-bottom:24px}
+.ksa{background:linear-gradient(135deg,#3a2a6e,#563D96);color:#f1ecfb;border-radius:var(--radius);padding:26px 28px;margin-bottom:24px}
 .ksa h1{color:#fff;margin-top:0}
-.ksa .tagline{color:#bff0d4}
+.ksa .tagline{color:#d8caf2}
 .facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
 .facts .f{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:8px 12px;font-size:13px}
 .facts .f b{display:block;color:#fff}
