@@ -2,3 +2,6 @@
 Thumbs.db
 node_modules/
 *.log
+
+# Claude Code personal overrides (WebFetch domain grants for reference sites)
+.claude/settings.local.json
